@@ -4,7 +4,7 @@ import cors from 'cors'
 //import {router as users} from './Routes/users.js'
 import users from './Routes/users.js'
 import mongoose from './DB/users.js';
-//try
+
 const port = 4000;
 const app=express()
 
