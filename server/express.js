@@ -1,12 +1,15 @@
 import express from 'express' 
 import bodyParser from 'body-parser'
 import cors from 'cors'
-//import {router as users} from './Routes/users.js'
+import dotenv from 'dotenv'
+import mongodb from 'mongodb'
 import users from './Routes/users.js'
 import mongoose from './DB/users.js';
 
-const port = 4000;
-const app=express()
+dotenv.config();
+const port=process.env.PORT;
+const app=express();
+
 
 app.use(cors());
 // translate Json

@@ -1,6 +1,7 @@
 import express from 'express'
 import userModel from '../Model/users.js'
 import mongoose from 'mongoose'
+import { testToken } from '../MiddleWare/token.js';
 import * as userServices from '../Services/users.js'
 //const ObjectId = mongoose.Types.ObjectId;
 
@@ -14,6 +15,7 @@ export const getAllUser=async (req,res)=>{
         res.status(200).json(users);
     }
     catch(error){
+        console.log(error);
         res.status(404).json({ message: 'לא נמצאו משתמשים' });
     }
 }
@@ -27,26 +29,28 @@ export const addNewUser=async (req,res)=> {
         // login(req, res);  //קריאה לפונקצית התחברות למערכת עם המשתמש החדש
     } 
     catch(error){
+        console.log(error);
         res.status(500).json({message: 'ההרשמה נכשלה, נסו שנית'});
     }
 }
 
-//פונקציה המחזירה משתמש לפי מייל
-export const getUserByEmail=async(req,res)=>{
+//פונקציה המחזירה משתמש לפי סיסמא
+export const getUserByPassword=async(req,res)=>{
     try{
-        const email=req.query.email;
-        if(!email){
-            return res.status(400).send({ message: 'לא הוקש מייל' });
+        const password=req.query.password;
+        if(!password){
+            return res.status(400).send({ message: 'לא הוקשה סיסמה' });
         }
-        await userModel.findOne({email:email})
+        await userModel.findOne({password:password})
         .then(user=>{
             if(!user){
-                return res.status(404).send({ message: 'לא נמצא משתמש התואם למייל זה' });
+                return res.status(404).send({ message: 'לא נמצא משתמש התואם לסיסמה זו' });
             }
             res.send(user)
         })
     }
     catch(error){
+        console.log(error);
         res.status(500).json({message: 'החיפוש נכשל, נסו שנית'});
     }
 }
@@ -68,15 +72,56 @@ export const getUsersByName=async(req,res)=>{
         })
     }
     catch(error){
+        console.log(error);
         res.status(500).json({message: 'החיפוש נכשל, נסו שנית'});
     }
 }
 
+//פונקציה לעדכון משתמש
+export const updateUser=async(req,res)=>{
+    try{
+        const { name, password, email } = req.body;
+        const user = { name, password, email };
+        
+        console.log(req)
+        const updaterUser=await userModel.findByIdAndUpdate(req.user._id,user,{new:true});
+        if(!updaterUser){
+            return res.status(404).send({ message: 'לא נמצא משתמש התואם לפרטים' });
+        }
+        const token=userServices.generateToken(req.user._id,user.name,user.password,user.email);
+        return res.json({token:token,user:user});
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({message: 'העידכון נכשל, נסו שנית'});
+    }
+}
+router.use('/update', testToken, updateUser);
 
-//login
-//update
+//פונקצית התחברות למערכת
+export const login=async(req,res)=>{
+    try{
+        const name=req.body.name;
+        const password=req.body.password;
+        const user=await getUsersByName(name);
+        if(!user){
+            return res.status(404).send({ message: 'לא קיים כזה משתמש, פנה להתחברות' });         
+        }
+        const currentUser=await getUserByPassword(password)
+        if(currentUser.name!=name){
+            return res.status(404).send({ message: 'שם משתמש או סיסמא שגויים, נסו שנית'});         
+        }
+        const token= userServices.generateToken(currentUser._id, currentUser.name, password, email);
+        res.user=currentUser;
+        return res.json({token, user});
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({message: 'ההתחברות נכשלה'});
+    }
+}
+
 
 
 export default router;
-
 
