@@ -24,9 +24,12 @@ export const getAllUser=async (req,res)=>{
 export const addNewUser=async (req,res)=> {
     try{
         const userData=userServices.dataNewUser(req);  //פונקציה המחזירה את פרטי המשתמש החדש
-        await userServices.createUser(userData);  //פונקציה היוצרת משתמש חדש
-        res.status(200).json({message: 'נרשמת בהצלחה למערכת'});
-        // login(req, res);  //קריאה לפונקצית התחברות למערכת עם המשתמש החדש
+        const user=await userServices.createUser(userData);  //פונקציה היוצרת משתמש חדש
+        const loginResponse=await login(req,res);  //קריאה לפונקצית התחברות למערכת עם המשתמש החדש
+        if(loginResponse.success){
+            const {token, user}=loginResponse;
+        }
+        res.status(200).json({message: 'נרשמת בהצלחה למערכת', token, user});
     } 
     catch(error){
         console.log(error);
@@ -35,19 +38,16 @@ export const addNewUser=async (req,res)=> {
 }
 
 //פונקציה המחזירה משתמש לפי סיסמא
-export const getUserByPassword=async(req,res)=>{
+export const getUserByPassword=async(password)=>{
     try{
-        const password=req.query.password;
         if(!password){
             return res.status(400).send({ message: 'לא הוקשה סיסמה' });
         }
-        await userModel.findOne({password:password})
-        .then(user=>{
+        const user=await userModel.findOne({password:password})
             if(!user){
                 return res.status(404).send({ message: 'לא נמצא משתמש התואם לסיסמה זו' });
             }
-            res.send(user)
-        })
+        return user;
     }
     catch(error){
         console.log(error);
@@ -56,24 +56,22 @@ export const getUserByPassword=async(req,res)=>{
 }
 
 //פונקציה המחזירה משתמש לפי שם
-export const getUsersByName=async(req,res)=>{
+export const getUsersByName=async(name)=>{
     try{
-        const name=req.query.name;
         if(!name){
-            return res.status(400).send({ message: 'לא הוקש שם' });
+            throw new Error('לא הוקש שם');
         }
         const regexName= new RegExp(`^${name}`, 'i');
-        await userModel.find({name:regexName})
-        .then(user=>{
+        const user=await userModel.find({name:regexName})
             if(user.length==0){
-                return res.status(404).send({ message: 'לא נמצא משתמש התואם לשם זה' });
+                throw new Error('לא נמצא משתמש התואם לשם זה');
             }
-            res.json({user});
-        })
+        return user;
     }
     catch(error){
         console.log(error);
-        res.status(500).json({message: 'החיפוש נכשל, נסו שנית'});
+        throw error;
+        // res.status(500).json({message: 'החיפוש נכשל, נסו שנית'});
     }
 }
 
@@ -81,10 +79,8 @@ export const getUsersByName=async(req,res)=>{
 export const updateUser=async(req,res)=>{
     try{
         const { name, password, email } = req.body;
-        const user = { name, password, email };
-        
-        console.log(req)
-        const updaterUser=await userModel.findByIdAndUpdate(req.user._id,user,{new:true});
+        const user = { name, password, email };      
+        const updaterUser=await userModel.findByIdAndUpdate(req.user._id,user,{new:true});     
         if(!updaterUser){
             return res.status(404).send({ message: 'לא נמצא משתמש התואם לפרטים' });
         }
@@ -99,7 +95,7 @@ export const updateUser=async(req,res)=>{
 router.use('/update', testToken, updateUser);
 
 //פונקצית התחברות למערכת
-export const login=async(req,res)=>{
+export const login=async(req, res)=>{
     try{
         const name=req.body.name;
         const password=req.body.password;
@@ -107,13 +103,13 @@ export const login=async(req,res)=>{
         if(!user){
             return res.status(404).send({ message: 'לא קיים כזה משתמש, פנה להתחברות' });         
         }
-        const currentUser=await getUserByPassword(password)
+        const currentUser=await getUserByPassword(password);
         if(currentUser.name!=name){
             return res.status(404).send({ message: 'שם משתמש או סיסמא שגויים, נסו שנית'});         
         }
-        const token= userServices.generateToken(currentUser._id, currentUser.name, password, email);
+        const token= userServices.generateToken(currentUser._id, name, password, currentUser.email);
         res.user=currentUser;
-        return res.json({token, user});
+        return res.json({token, currentUser});
     }
     catch(error){
         console.log(error);

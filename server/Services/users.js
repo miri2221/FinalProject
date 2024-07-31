@@ -20,8 +20,9 @@ export const dataNewUser= (req)=>{
 export const createUser= async (userData)=>{
     let user=new userModel(userData);
     await user.save();
+    return user;
 }
-export const generateToken= (id,name, password, email)=>{
+export const generateToken= (id,name, password, email, phone=null, address=null, city=null, logo=null)=>{
     const secretKey =process.env.SECRET_KET;
     const params={
         '_id': id,
@@ -29,6 +30,10 @@ export const generateToken= (id,name, password, email)=>{
         'password': password,
         'email': email
     };
+    if (phone) params.phone = phone;
+    if (address) params.address = address;
+    if (city) params.city = city;
+    if (logo) params.logo = logo;
     const token=jwt.sign(params, secretKey);
     return token;
 }

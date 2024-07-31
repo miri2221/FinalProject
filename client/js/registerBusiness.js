@@ -2,6 +2,9 @@ function addUser(){
     let name=document.getElementById('name').value;
     let password=document.getElementById('password').value;
     let email=document.getElementById('email').value;
+    let phone=document.getElementById('phone').value;
+    let address=document.getElementById('address').value;
+    let city=document.getElementById('city').value;
     var newuser={
         "url":"http://localhost:4000/users",
         "method": "POST",
@@ -13,7 +16,10 @@ function addUser(){
         "data" :JSON.stringify({
             "name": name,
             "password": password,
-            "email": email
+            "email": email,
+            "phone":phone,
+            "address":address,
+            "city":city
         })
     }
     $.ajax(newuser)    //מפעיל אותו
