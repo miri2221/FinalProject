@@ -25,11 +25,14 @@ export const addNewUser=async (req,res)=> {
     try{
         const userData=userServices.dataNewUser(req);  //פונקציה המחזירה את פרטי המשתמש החדש
         const user=await userServices.createUser(userData);  //פונקציה היוצרת משתמש חדש
-        const loginResponse=await login(req,res);  //קריאה לפונקצית התחברות למערכת עם המשתמש החדש
+        const loginResponse=await login(req);  //קריאה לפונקצית התחברות למערכת עם המשתמש החדש
         if(loginResponse.success){
             const {token, user}=loginResponse;
+            res.status(200).json({message: 'נרשמת בהצלחה למערכת', token, user});
         }
-        res.status(200).json({message: 'נרשמת בהצלחה למערכת', token, user});
+        else{
+            return res.status(401).json({message:'ההתחברות נכשלה'});
+        }
     } 
     catch(error){
         console.log(error);
@@ -95,7 +98,7 @@ export const updateUser=async(req,res)=>{
 router.use('/update', testToken, updateUser);
 
 //פונקצית התחברות למערכת
-export const login=async(req, res)=>{
+export const login=async(req)=>{
     try{
         const name=req.body.name;
         const password=req.body.password;
@@ -104,12 +107,13 @@ export const login=async(req, res)=>{
             return res.status(404).send({ message: 'לא קיים כזה משתמש, פנה להתחברות' });         
         }
         const currentUser=await getUserByPassword(password);
-        if(currentUser.name!=name){
+        if(!currentUser||currentUser.name!=name){
             return res.status(404).send({ message: 'שם משתמש או סיסמא שגויים, נסו שנית'});         
         }
         const token= userServices.generateToken(currentUser._id, name, password, currentUser.email);
-        res.user=currentUser;
-        return res.json({token, currentUser});
+        //res.user=currentUser;
+        // return res.json({token, currentUser});
+        return {success:true, token, user:currentUser};
     }
     catch(error){
         console.log(error);

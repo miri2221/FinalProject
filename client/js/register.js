@@ -21,7 +21,7 @@ function addUser(){
             //response - התגובה שהתקבלה מהשרת
             console.log(response);
             localStorage.setItem("token",response.token);
-            localStorage.setItem("user",response.currentUser.name);
+            localStorage.setItem("user",response.user.name);
             window.location.href ="../html/home.html";
         })
         //פעולה זו תמיד מקבלת את אותו הדבר, משהו קבוע
