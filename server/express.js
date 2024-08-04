@@ -3,8 +3,10 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import mongodb from 'mongodb'
+import mongoose from './DB/mongo.js'
 import users from './Routes/users.js'
-import mongoose from './DB/users.js';
+import dress from './Routes/dress.js'
+
 
 dotenv.config();
 const port=process.env.PORT;
@@ -26,6 +28,7 @@ app.get("/m",(req,res)=>{
     res.send("miri");
 });
 app.use("/users",users);
+app.use("/dress",dress);
 
 
 app.listen(port,()=>{

@@ -5,16 +5,16 @@ import jwt from 'jsonwebtoken';
  
 
 export const dataNewUser= (req)=>{
-    const {name,password, email, phone, adderss, city, logo} =req.body;    
+    const {name,password, email, phone, address, city, logo} =req.body;    
     return {
         name,
         password,
         email,
         phone,
-        adderss,
+        address,
         city,
         logo,
-        dress: []
+        // dress: []
     };
 }
 export const createUser= async (userData)=>{
